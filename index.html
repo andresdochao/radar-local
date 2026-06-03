@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Radar Local - La Palma del Condado</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --bg: #f4f4f1;
+      --panel: #ffffff;
+      --text: #1d1d1f;
+      --muted: #666;
+      --border: #ddd;
+      --accent: #1b4332;
+      --accent-2: #2d6a4f;
+      --accent-light: #d8f3dc;
+      --warning: #f4a261;
+      --danger: #e76f51;
+      --good: #40916c;
+      --blue: #277da1;
+      --purple: #6d597a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 22px;
+      background: linear-gradient(135deg, #123524, #1b4332, #2d6a4f);
+      color: white;
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      font-size: 0.98rem;
+      opacity: 0.95;
+      line-height: 1.45;
+      max-width: 1050px;
+    }
+
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .intro-card {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 12px;
+      padding: 12px;
+      backdrop-filter: blur(4px);
+    }
+
+    .intro-card strong {
+      display: block;
+      font-size: 0.86rem;
+      margin-bottom: 4px;
+    }
+
+    .intro-card span {
+      display: block;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      opacity: 0.92;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      min-height: calc(100vh - 190px);
+    }
+
+    .sidebar {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 18px;
+      overflow-y: auto;
+      max-height: calc(100vh - 190px);
+    }
+
+    .section {
+      margin-bottom: 22px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section:last-child {
+      border-bottom: 0;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+
+    select,
+    input,
+    textarea,
+    button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    button {
+      border: none;
+      background: var(--accent-2);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      opacity: 0.92;
+    }
+
+    .secondary-button {
+      background: #555;
+    }
+
+    .danger-button {
+      background: var(--danger);
+    }
+
+    .result-card {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .alto {
+      background: #d8f3dc;
+      color: #1b4332;
+    }
+
+    .medio {
+      background: #fff3b0;
+      color: #6c5300;
+    }
+
+    .bajo {
+      background: #ffd6d6;
+      color: #7f1d1d;
+    }
+
+    .descartada {
+      background: #eeeeee;
+      color: #555;
+    }
+
+    .small {
+      font-size: 0.86rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    ul {
+      margin-top: 8px;
+      padding-left: 18px;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      min-height: 650px;
+    }
+
+    .signals-list {
+      margin-top: 10px;
+      font-size: 0.88rem;
+    }
+
+    .signal-item {
+      background: #f7f7f7;
+      border: 1px solid var(--border);
+      padding: 9px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .signal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .signal-actions button {
+      margin-top: 0;
+      font-size: 0.78rem;
+      padding: 7px;
+    }
+
+    .footer-note {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .validation-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.86rem;
+    }
+
+    .validation-table td {
+      border-bottom: 1px solid var(--border);
+      padding: 7px 0;
+      vertical-align: top;
+    }
+
+    .validation-table td:last-child {
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .map-legend {
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .dot-municipio {
+      background: #40916c;
+    }
+
+    .dot-existente {
+      background: #277da1;
+    }
+
+    .dot-oportunidad {
+      background: #f4a261;
+    }
+
+    .dot-senal {
+      background: #e76f51;
+    }
+
+    .map-note {
+      position: absolute;
+      z-index: 800;
+      bottom: 18px;
+      left: 18px;
+      background: rgba(255,255,255,0.95);
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      max-width: 360px;
+      font-size: 0.82rem;
+      color: #444;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    .map-wrapper {
+      position: relative;
+    }
+
+    @media (max-width: 980px) {
+      .intro-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        max-height: none;
+      }
+
+      #map {
+        height: 560px;
+      }
+    }
+
+    @media (max-width: 580px) {
+      header {
+        padding: 18px;
+      }
+
+      header h1 {
+        font-size: 1.35rem;
+      }
+
+      .intro-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .app {
+        min-height: auto;
+      }
+
+      #map {
+        height: 520px;
+      }
+
+      .map-note {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Radar Local — Piloto La Palma del Condado</h1>
+      <p>
+        Prototipo de herramienta para detectar oportunidades económicas de proximidad en municipios y comarcas,
+        combinando datos territoriales, oferta existente, posibles zonas sin cobertura y señales aportadas por vecinos,
+        emprendedores y agentes de desarrollo local.
+      </p>
+
+      <div class="intro-grid">
+        <div class="intro-card">
+          <strong>¿Para qué sirve?</strong>
+          <span>Ayuda a identificar actividades económicas que podrían tener sentido en una zona concreta antes de iniciar un estudio de viabilidad.</span>
+        </div>
+
+        <div class="intro-card">
+          <strong>¿Quién lo construye?</strong>
+          <span>Prototipo impulsado por Andrés Dochao como herramienta experimental de inteligencia territorial para desarrollo local.</span>
+        </div>
+
+        <div class="intro-card">
+          <strong>¿Cómo funciona?</strong>
+          <span>Selecciona una actividad, muestra oferta existente y zonas sugeridas, y ajusta la oportunidad con señales locales validadas.</span>
+        </div>
+
+        <div class="intro-card">
+          <strong>Importante</strong>
+          <span>No predice rentabilidad. Ordena indicios y ayuda a decidir qué oportunidades merecen validación sobre el terreno.</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app">
+    <aside class="sidebar">
+
+      <section class="section">
+        <label for="activitySelect">Actividad a analizar</label>
+        <select id="activitySelect">
+          <option value="mayores">Servicios a mayores</option>
+          <option value="podologia">Podología / fisioterapia</option>
+          <option value="lavanderia">Lavandería autoservicio</option>
+          <option value="informatica">Reparación móvil / informática</option>
+          <option value="coworking">Coworking / sala de trabajo</option>
+          <option value="comida">Comida preparada</option>
+        </select>
+
+        <div id="opportunityCard" class="result-card"></div>
+      </section>
+
+      <section class="section">
+        <h3>Añadir señal local</h3>
+        <p class="small">
+          Aquí un vecino, ADL o técnico puede aportar una carencia, oportunidad o dato local.
+        </p>
+
+        <label for="signalStatus">Perfil / estado de la señal</label>
+        <select id="signalStatus">
+          <option value="Vecinal">Vecinal</option>
+          <option value="ADL / técnico">ADL / técnico</option>
+          <option value="Validada">Validada</option>
+          <option value="Descartada">Descartada</option>
+        </select>
+
+        <label for="signalType">Tipo de señal</label>
+        <select id="signalType">
+          <option value="Falta un servicio">Falta un servicio</option>
+          <option value="Servicio saturado">Servicio saturado</option>
+          <option value="Local vacío">Local vacío</option>
+          <option value="La gente se desplaza a otro pueblo">La gente se desplaza a otro pueblo</option>
+          <option value="Demanda de mayores">Demanda de mayores</option>
+          <option value="Demanda de jóvenes/familias">Demanda de jóvenes/familias</option>
+          <option value="Oportunidad turística">Oportunidad turística</option>
+          <option value="Otra">Otra</option>
+        </select>
+
+        <label for="signalPlace">Lugar</label>
+        <input id="signalPlace" placeholder="Ej. La Palma, barrio del centro, estación..." />
+
+        <label for="signalText">Observación</label>
+        <textarea id="signalText" placeholder="Ej. No hay lavandería autoservicio cerca y la gente tendría que desplazarse..."></textarea>
+
+        <button id="addSignalBtn">Añadir señal</button>
+
+        <div class="signals-list" id="signalsList"></div>
+      </section>
+
+      <section class="section">
+        <h3>Estado del prototipo</h3>
+        <div class="result-card">
+          <p class="small">
+            <strong>Versión:</strong> 0.3 local<br>
+            <strong>Datos:</strong> simulados/manuales<br>
+            <strong>Mapa:</strong> OpenStreetMap<br>
+            <strong>Circuito de validación:</strong> básico incluido<br>
+            <strong>Zona:</strong> casco urbano de La Palma del Condado
+          </p>
+        </div>
+
+        <button id="clearSignalsBtn" class="danger-button">Borrar todas las señales</button>
+
+        <p class="footer-note">
+          Este prototipo no estima rentabilidad real. Solo muestra señales iniciales de oportunidad que deberían contrastarse con trabajo de campo y estudio de viabilidad.
+        </p>
+      </section>
+
+    </aside>
+
+    <section class="map-wrapper">
+      <section id="map"></section>
+      <div class="map-note">
+        <strong>Lectura del mapa:</strong><br>
+        Los puntos azules representan oferta o servicios existentes. Las zonas naranjas son ubicaciones orientativas donde podría explorarse una nueva actividad. Las señales locales aparecen en rojo.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // -----------------------------
+    // 1. Datos básicos del territorio
+    // -----------------------------
+
+    const center = [37.3866, -6.5526]; // La Palma del Condado
+
+    const municipalities = [
+      {
+        name: "La Palma del Condado",
+        coords: [37.3866, -6.5526],
+        population: 10858,
+        role: "Nodo central"
+      },
+      {
+        name: "Bollullos Par del Condado",
+        coords: [37.3402, -6.5393],
+        population: 14000,
+        role: "Municipio cercano"
+      },
+      {
+        name: "Rociana del Condado",
+        coords: [37.3088, -6.5984],
+        population: 8000,
+        role: "Municipio cercano"
+      },
+      {
+        name: "Villarrasa",
+        coords: [37.3889, -6.6054],
+        population: 2200,
+        role: "Municipio cercano"
+      },
+      {
+        name: "Villalba del Alcor",
+        coords: [37.3977, -6.4757],
+        population: 3300,
+        role: "Municipio cercano"
+      },
+      {
+        name: "Almonte",
+        coords: [37.2647, -6.5167],
+        population: 25000,
+        role: "Municipio mayor del entorno"
+      }
+    ];
+
+    // -----------------------------
+    // 2. Actividades piloto
+    // Los datos son orientativos/simulados para probar el prototipo.
+    // -----------------------------
+
+    const opportunities = {
+      mayores: {
+        title: "Servicios a mayores",
+        level: "Alto",
+        score: 78,
+        mapIntro: "Se muestran equipamientos de referencia y zonas residenciales donde podría explorarse atención domiciliaria o servicios de apoyo a mayores.",
+        reasons: [
+          "Demanda potencial asociada al envejecimiento.",
+          "Servicio compatible con atención domiciliaria.",
+          "Puede cubrir varios municipios cercanos.",
+          "Necesita alta confianza local y validación con ADL/asociaciones."
+        ],
+        risks: [
+          "Dependencia de personal cualificado.",
+          "Dificultad para convertir necesidad social en pago recurrente."
+        ],
+        existingServices: [
+          { name: "Centro de salud", coords: [37.3882, -6.5541], type: "Equipamiento de referencia" },
+          { name: "Farmacia zona centro", coords: [37.3869, -6.5535], type: "Aliado potencial" }
+        ],
+        suggestedLocations: [
+          { name: "Zona residencial norte", coords: [37.3910, -6.5510], reason: "Área residencial para explorar servicios a domicilio." },
+          { name: "Entorno centro urbano", coords: [37.3863, -6.5523], reason: "Zona accesible para punto de información o atención presencial." }
+        ]
+      },
+
+      podologia: {
+        title: "Podología / fisioterapia",
+        level: "Medio-Alto",
+        score: 70,
+        mapIntro: "Se muestran posibles aliados sanitarios y zonas donde tendría sentido validar demanda con mayores, farmacias y asociaciones.",
+        reasons: [
+          "Actividad vinculada a población mayor y salud cotidiana.",
+          "Puede funcionar con agenda semanal o desplazamiento comarcal.",
+          "Buena candidata para validar con farmacias, centros de salud y asociaciones."
+        ],
+        risks: [
+          "Requiere titulación profesional.",
+          "La demanda real depende mucho de confianza y precio."
+        ],
+        existingServices: [
+          { name: "Centro de salud", coords: [37.3882, -6.5541], type: "Equipamiento de referencia" },
+          { name: "Farmacia centro", coords: [37.3869, -6.5535], type: "Aliado potencial" }
+        ],
+        suggestedLocations: [
+          { name: "Entorno centro / farmacia", coords: [37.3867, -6.5529], reason: "Zona céntrica con accesibilidad peatonal." },
+          { name: "Zona residencial este", coords: [37.3840, -6.5468], reason: "Posible demanda de proximidad en área residencial." }
+        ]
+      },
+
+      lavanderia: {
+        title: "Lavandería autoservicio",
+        level: "Medio",
+        score: 58,
+        mapIntro: "Se muestran puntos orientativos de oferta existente y posibles zonas donde explorar una lavandería por ausencia de cobertura directa.",
+        reasons: [
+          "Servicio claro de proximidad y fácil de explicar.",
+          "Puede tener sentido si hay pisos pequeños, alquileres, turismo o población de paso.",
+          "Interesante para probar análisis de baja cobertura."
+        ],
+        risks: [
+          "Inversión inicial relevante.",
+          "Costes energéticos.",
+          "La demanda puede ser insuficiente si no hay masa crítica."
+        ],
+        existingServices: [
+          { name: "Lavandería / tintorería existente orientativa", coords: [37.3862, -6.5530], type: "Oferta existente simulada" },
+          { name: "Eje comercial centro", coords: [37.3855, -6.5517], type: "Zona comercial" }
+        ],
+        suggestedLocations: [
+          { name: "Posible nueva ubicación oeste", coords: [37.3894, -6.5592], reason: "Zona con posible menor cobertura respecto al centro." },
+          { name: "Posible nueva ubicación norte", coords: [37.3916, -6.5506], reason: "Área residencial para validar masa crítica." }
+        ]
+      },
+
+      informatica: {
+        title: "Reparación móvil / informática",
+        level: "Medio",
+        score: 61,
+        mapIntro: "Se muestran zonas comerciales y posibles ubicaciones para servicio mixto de reparación, asistencia digital y apoyo a autónomos.",
+        reasons: [
+          "Demanda transversal en jóvenes, familias, autónomos y mayores.",
+          "Puede combinar reparación, formación digital y asistencia a domicilio.",
+          "Encaja bien en cabecera comarcal."
+        ],
+        risks: [
+          "Márgenes bajos en reparación.",
+          "Competencia online.",
+          "Necesidad de reputación rápida."
+        ],
+        existingServices: [
+          { name: "Zona comercial centro", coords: [37.3863, -6.5521], type: "Zona comercial" },
+          { name: "Área de paso", coords: [37.3849, -6.5542], type: "Posible tránsito local" }
+        ],
+        suggestedLocations: [
+          { name: "Centro urbano", coords: [37.3867, -6.5524], reason: "Ubicación visible y accesible para reparación rápida." },
+          { name: "Entorno educativo / juvenil", coords: [37.3898, -6.5486], reason: "Validar demanda joven y familiar." }
+        ]
+      },
+
+      coworking: {
+        title: "Coworking / sala de trabajo",
+        level: "Bajo-Medio",
+        score: 45,
+        mapIntro: "Se muestran posibles nodos urbanos donde podría probarse un servicio compartido de trabajo, formación o reuniones.",
+        reasons: [
+          "Interesante por teletrabajo y profesionales independientes.",
+          "Puede funcionar mejor como servicio mixto: aula, formación, reuniones y asesoría.",
+          "Necesita mucha validación antes de inversión."
+        ],
+        risks: [
+          "Demanda incierta en municipio pequeño.",
+          "Puede ser más viable como servicio municipal o híbrido."
+        ],
+        existingServices: [
+          { name: "Centro urbano", coords: [37.3866, -6.5526], type: "Nodo potencial" },
+          { name: "Área administrativa/comercial", coords: [37.3858, -6.5508], type: "Entorno de servicios" }
+        ],
+        suggestedLocations: [
+          { name: "Espacio céntrico compartido", coords: [37.3862, -6.5517], reason: "Buena visibilidad para probar modelo híbrido." },
+          { name: "Zona tranquila de trabajo", coords: [37.3890, -6.5550], reason: "Validar uso como sala de estudio/trabajo." }
+        ]
+      },
+
+      comida: {
+        title: "Comida preparada",
+        level: "Medio-Alto",
+        score: 67,
+        mapIntro: "Se muestran zonas de restauración y áreas residenciales donde podría validarse demanda de comida preparada o menú semanal.",
+        reasons: [
+          "Demanda posible en familias, mayores, trabajadores y personas con poco tiempo.",
+          "Puede empezar con formato pequeño: encargos, menú semanal o cocina saludable.",
+          "Muy sensible a hábitos locales y precio."
+        ],
+        risks: [
+          "Requisitos sanitarios.",
+          "Competencia de bares/restaurantes.",
+          "Necesidad de validar qué tipo de comida se demandaría."
+        ],
+        existingServices: [
+          { name: "Eje de restauración centro", coords: [37.3855, -6.5532], type: "Oferta cercana" },
+          { name: "Zona comercial", coords: [37.3861, -6.5511], type: "Entorno comercial" }
+        ],
+        suggestedLocations: [
+          { name: "Zona residencial norte", coords: [37.3914, -6.5501], reason: "Validar demanda de familias y mayores." },
+          { name: "Entorno de paso", coords: [37.3845, -6.5551], reason: "Posible recogida de comida preparada." }
+        ]
+      }
+    };
+
+    // -----------------------------
+    // 3. Inicialización del mapa
+    // -----------------------------
+
+    const map = L.map("map").setView(center, 15);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap"
+    }).addTo(map);
+
+    let markersLayer = L.layerGroup().addTo(map);
+    let municipalitiesLayer = L.layerGroup().addTo(map);
+    let opportunityZonesLayer = L.layerGroup().addTo(map);
+    let signalMarkersLayer = L.layerGroup().addTo(map);
+
+    const legend = L.control({ position: "topright" });
+
+    legend.onAdd = function () {
+      const div = L.DomUtil.create("div", "map-legend");
+      div.innerHTML = `
+        <strong>Leyenda</strong><br>
+        <span class="legend-dot dot-municipio"></span>Municipio / nodo<br>
+        <span class="legend-dot dot-existente"></span>Oferta o servicio existente<br>
+        <span class="legend-dot dot-oportunidad"></span>Zona sugerida<br>
+        <span class="legend-dot dot-senal"></span>Señal local
+      `;
+      return div;
+    };
+
+    legend.addTo(map);
+
+    // -----------------------------
+    // 4. Funciones auxiliares
+    // -----------------------------
+
+    function getBadgeClass(level) {
+      if (level.toLowerCase().includes("alto")) return "alto";
+      if (level.toLowerCase().includes("medio")) return "medio";
+      return "bajo";
+    }
+
+    function getCurrentActivityKey() {
+      return document.getElementById("activitySelect").value;
+    }
+
+    function getSignals() {
+      const saved = localStorage.getItem("radarLocalSignals");
+      return saved ? JSON.parse(saved) : [];
+    }
+
+    function saveSignals(signals) {
+      localStorage.setItem("radarLocalSignals", JSON.stringify(signals));
+    }
+
+    function getActivityValidationStats(activityKey) {
+      const signals = getSignals();
+
+      const relatedSignals = signals.filter(signal =>
+        signal.relatedActivity === activityKey &&
+        signal.status !== "Descartada"
+      );
+
+      const discardedSignals = signals.filter(signal =>
+        signal.relatedActivity === activityKey &&
+        signal.status === "Descartada"
+      );
+
+      const validatedSignals = relatedSignals.filter(signal =>
+        signal.status === "Validada"
+      );
+
+      const technicalSignals = relatedSignals.filter(signal =>
+        signal.status === "ADL / técnico"
+      );
+
+      const citizenSignals = relatedSignals.filter(signal =>
+        signal.status === "Vecinal"
+      );
+
+      const signalBonus =
+        citizenSignals.length * 2 +
+        technicalSignals.length * 4 +
+        validatedSignals.length * 6;
+
+      return {
+        relatedSignals,
+        discardedSignals,
+        validatedSignals,
+        technicalSignals,
+        citizenSignals,
+        signalBonus
+      };
+    }
+
+    function calculateAdjustedOpportunity(activityKey) {
+      const activity = opportunities[activityKey];
+      const stats = getActivityValidationStats(activityKey);
+
+      const adjustedScore = Math.min(activity.score + stats.signalBonus, 100);
+
+      let adjustedLevel = "Bajo";
+
+      if (adjustedScore >= 70) {
+        adjustedLevel = "Alto";
+      } else if (adjustedScore >= 50) {
+        adjustedLevel = "Medio";
+      }
+
+      return {
+        adjustedScore,
+        adjustedLevel,
+        stats
+      };
+    }
+
+    function getValidationSummary(activityKey) {
+      const { stats } = calculateAdjustedOpportunity(activityKey);
+
+      const hasPublicData = "Disponible";
+      const hasMapOffer = "Parcial";
+      const hasCitizenSignals = stats.citizenSignals.length > 0 ? "Sí" : "Pendiente";
+      const hasTechnicalValidation =
+        stats.technicalSignals.length > 0 || stats.validatedSignals.length > 0 ? "Sí" : "Pendiente";
+      const hasEconomicViability = "Pendiente";
+
+      return {
+        hasPublicData,
+        hasMapOffer,
+        hasCitizenSignals,
+        hasTechnicalValidation,
+        hasEconomicViability
+      };
+    }
+
+    // -----------------------------
+    // 5. Visualización de municipios
+    // -----------------------------
+
+    function renderMunicipalities() {
+      municipalitiesLayer.clearLayers();
+
+      municipalities.forEach(m => {
+        const isMain = m.name === "La Palma del Condado";
+
+        L.circleMarker(m.coords, {
+          radius: isMain ? 9 : 6,
+          color: "#1b4332",
+          fillColor: "#40916c",
+          fillOpacity: 0.85
+        })
+        .bindPopup(`
+          <strong>${m.name}</strong><br>
+          ${m.role}<br>
+          Población aprox.: ${m.population.toLocaleString("es-ES")}
+        `)
+        .addTo(municipalitiesLayer);
+      });
+    }
+
+    // -----------------------------
+    // 6. Visualización de oportunidad
+    // -----------------------------
+
+    function renderOpportunity(activityKey) {
+      const activity = opportunities[activityKey];
+
+      const {
+        adjustedScore,
+        adjustedLevel,
+        stats
+      } = calculateAdjustedOpportunity(activityKey);
+
+      const validation = getValidationSummary(activityKey);
+
+      markersLayer.clearLayers();
+      opportunityZonesLayer.clearLayers();
+
+      const card = document.getElementById("opportunityCard");
+
+      card.innerHTML = `
+        <span class="badge ${getBadgeClass(adjustedLevel)}">
+          Oportunidad ${adjustedLevel} · ${adjustedScore}/100
+        </span>
+
+        <h3>${activity.title}</h3>
+
+        <p class="small">
+          ${activity.mapIntro}
+        </p>
+
+        <div class="result-card">
+          <strong>Lectura del mapa</strong>
+          <p class="small">
+            Puntos azules: oferta o servicios existentes.<br>
+            Zonas naranjas: posibles ubicaciones a explorar.<br>
+            Señales rojas: aportaciones locales del usuario.
+          </p>
+        </div>
+
+        <div class="result-card">
+          <strong>Circuito de validación</strong>
+          <p class="small">
+            Señales vecinales: ${stats.citizenSignals.length}<br>
+            Señales ADL / técnico: ${stats.technicalSignals.length}<br>
+            Señales validadas: ${stats.validatedSignals.length}<br>
+            Señales descartadas: ${stats.discardedSignals.length}<br>
+            Impacto de señales: +${stats.signalBonus} puntos
+          </p>
+        </div>
+
+        <div class="result-card">
+          <strong>Ficha de validación</strong>
+          <table class="validation-table">
+            <tr>
+              <td>Datos públicos</td>
+              <td>${validation.hasPublicData}</td>
+            </tr>
+            <tr>
+              <td>Oferta detectada en mapa</td>
+              <td>${validation.hasMapOffer}</td>
+            </tr>
+            <tr>
+              <td>Señales vecinales</td>
+              <td>${validation.hasCitizenSignals}</td>
+            </tr>
+            <tr>
+              <td>Validación ADL / técnica</td>
+              <td>${validation.hasTechnicalValidation}</td>
+            </tr>
+            <tr>
+              <td>Viabilidad económica</td>
+              <td>${validation.hasEconomicViability}</td>
+            </tr>
+          </table>
+        </div>
+
+        <strong>Motivos:</strong>
+        <ul>
+          ${activity.reasons.map(r => `<li>${r}</li>`).join("")}
+        </ul>
+
+        <strong>Riesgos:</strong>
+        <ul>
+          ${activity.risks.map(r => `<li>${r}</li>`).join("")}
+        </ul>
+
+        <p class="small">
+          <strong>Nota:</strong> esta puntuación no estima rentabilidad real. Solo prioriza oportunidades para validación territorial y estudio de viabilidad.
+        </p>
+      `;
+
+      activity.existingServices.forEach(service => {
+        L.circleMarker(service.coords, {
+          radius: 9,
+          color: "#155e75",
+          fillColor: "#277da1",
+          fillOpacity: 0.9
+        })
+        .bindPopup(`
+          <strong>${service.name}</strong><br>
+          ${service.type}<br>
+          Actividad analizada: ${activity.title}
+        `)
+        .addTo(markersLayer);
+      });
+
+      activity.suggestedLocations.forEach(location => {
+        L.circle(location.coords, {
+          radius: 120,
+          color: "#e76f51",
+          fillColor: "#f4a261",
+          fillOpacity: 0.25,
+          weight: 2
+        })
+        .bindPopup(`
+          <strong>${location.name}</strong><br>
+          Posible zona de oportunidad<br>
+          ${location.reason}<br>
+          Actividad analizada: ${activity.title}
+        `)
+        .addTo(opportunityZonesLayer);
+
+        L.circleMarker(location.coords, {
+          radius: 7,
+          color: "#e76f51",
+          fillColor: "#f4a261",
+          fillOpacity: 0.95
+        })
+        .bindPopup(`
+          <strong>${location.name}</strong><br>
+          ${location.reason}
+        `)
+        .addTo(opportunityZonesLayer);
+      });
+
+      map.setView(center, 15);
+    }
+
+    // -----------------------------
+    // 7. Señales locales
+    // -----------------------------
+
+    function renderSignals() {
+      const signals = getSignals();
+      const list = document.getElementById("signalsList");
+
+      signalMarkersLayer.clearLayers();
+
+      if (signals.length === 0) {
+        list.innerHTML = `<p class="small">Todavía no hay señales locales añadidas.</p>`;
+        return;
+      }
+
+      list.innerHTML = `
+        <h4>Señales añadidas</h4>
+        ${signals.map((signal, index) => {
+          const status = signal.status || "Vecinal";
+          const activityName = opportunities[signal.relatedActivity]?.title || "No indicada";
+          const statusClass = status === "Descartada" ? "descartada" : getBadgeClass(status);
+
+          return `
+            <div class="signal-item">
+              <span class="badge ${statusClass}">${status}</span><br>
+              <strong>${signal.type}</strong><br>
+              <span>${signal.place}</span><br>
+              <span class="small">
+                Actividad vinculada: ${activityName}<br>
+                ${signal.text}
+              </span>
+
+              <div class="signal-actions">
+                <button onclick="validateSignal(${index})">Validar</button>
+                <button class="secondary-button" onclick="markSignalAsTechnical(${index})">ADL/técnico</button>
+                <button class="secondary-button" onclick="markSignalAsCitizen(${index})">Vecinal</button>
+                <button class="danger-button" onclick="discardSignal(${index})">Descartar</button>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      `;
+
+      signals.forEach(signal => {
+        const isDiscarded = signal.status === "Descartada";
+
+        L.circleMarker(signal.coords, {
+          radius: 7,
+          color: isDiscarded ? "#777" : "#9d0208",
+          fillColor: isDiscarded ? "#bbb" : "#e76f51",
+          fillOpacity: 0.9
+        })
+        .bindPopup(`
+          <strong>Señal local</strong><br>
+          ${signal.type}<br>
+          <em>${signal.place}</em><br>
+          Estado: ${signal.status || "Vecinal"}<br>
+          Actividad: ${opportunities[signal.relatedActivity]?.title || "No indicada"}<br>
+          ${signal.text}
+        `)
+        .addTo(signalMarkersLayer);
+      });
+    }
+
+    function guessCoordinates(place) {
+      const normalized = place.toLowerCase();
+
+      const found = municipalities.find(m =>
+        normalized.includes(m.name.toLowerCase().split(" ")[0])
+      );
+
+      if (found) return found.coords;
+
+      if (normalized.includes("centro")) return [37.3864, -6.5524];
+      if (normalized.includes("estación") || normalized.includes("estacion")) return [37.3847, -6.5560];
+      if (normalized.includes("norte")) return [37.3912, -6.5511];
+      if (normalized.includes("oeste")) return [37.3892, -6.5590];
+      if (normalized.includes("este")) return [37.3840, -6.5470];
+
+      const randomLat = center[0] + (Math.random() - 0.5) * 0.018;
+      const randomLng = center[1] + (Math.random() - 0.5) * 0.018;
+
+      return [randomLat, randomLng];
+    }
+
+    function refreshApp() {
+      renderOpportunity(getCurrentActivityKey());
+      renderSignals();
+    }
+
+    function validateSignal(index) {
+      const signals = getSignals();
+      signals[index].status = "Validada";
+      saveSignals(signals);
+      refreshApp();
+    }
+
+    function markSignalAsTechnical(index) {
+      const signals = getSignals();
+      signals[index].status = "ADL / técnico";
+      saveSignals(signals);
+      refreshApp();
+    }
+
+    function markSignalAsCitizen(index) {
+      const signals = getSignals();
+      signals[index].status = "Vecinal";
+      saveSignals(signals);
+      refreshApp();
+    }
+
+    function discardSignal(index) {
+      const signals = getSignals();
+      signals[index].status = "Descartada";
+      saveSignals(signals);
+      refreshApp();
+    }
+
+    document.getElementById("addSignalBtn").addEventListener("click", () => {
+      const status = document.getElementById("signalStatus").value;
+      const type = document.getElementById("signalType").value;
+      const place = document.getElementById("signalPlace").value.trim();
+      const text = document.getElementById("signalText").value.trim();
+
+      if (!place || !text) {
+        alert("Añade al menos un lugar y una observación.");
+        return;
+      }
+
+      const signals = getSignals();
+
+      signals.push({
+        status,
+        type,
+        place,
+        text,
+        relatedActivity: getCurrentActivityKey(),
+        coords: guessCoordinates(place),
+        createdAt: new Date().toISOString()
+      });
+
+      saveSignals(signals);
+
+      document.getElementById("signalPlace").value = "";
+      document.getElementById("signalText").value = "";
+
+      refreshApp();
+
+      alert("Señal local añadida al prototipo.");
+    });
+
+    document.getElementById("clearSignalsBtn").addEventListener("click", () => {
+      const confirmDelete = confirm("¿Seguro que quieres borrar todas las señales locales guardadas en este navegador?");
+
+      if (!confirmDelete) return;
+
+      localStorage.removeItem("radarLocalSignals");
+      refreshApp();
+
+      alert("Señales borradas.");
+    });
+
+    // -----------------------------
+    // 8. Eventos
+    // -----------------------------
+
+    document.getElementById("activitySelect").addEventListener("change", (event) => {
+      renderOpportunity(event.target.value);
+    });
+
+    // -----------------------------
+    // 9. Arranque de la app
+    // -----------------------------
+
+    renderMunicipalities();
+    renderOpportunity("mayores");
+    renderSignals();
+  </script>
+</body>
+</html>
