@@ -94,10 +94,21 @@
       opacity: 0.92;
     }
 
+    .prototype-warning {
+      margin-top: 14px;
+      padding: 11px 13px;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      line-height: 1.35;
+      font-weight: bold;
+    }
+
     .app {
       display: grid;
       grid-template-columns: 390px 1fr;
-      min-height: calc(100vh - 190px);
+      min-height: calc(100vh - 230px);
     }
 
     .sidebar {
@@ -105,7 +116,7 @@
       border-right: 1px solid var(--border);
       padding: 18px;
       overflow-y: auto;
-      max-height: calc(100vh - 190px);
+      max-height: calc(100vh - 230px);
     }
 
     .section {
@@ -411,6 +422,10 @@
           <span>No predice rentabilidad. Ordena indicios y ayuda a decidir qué oportunidades merecen validación sobre el terreno.</span>
         </div>
       </div>
+
+      <div class="prototype-warning">
+        Versión experimental con datos simulados/orientativos. No constituye recomendación de inversión ni sustituye un estudio de viabilidad.
+      </div>
     </div>
   </header>
 
@@ -472,7 +487,7 @@
         <h3>Estado del prototipo</h3>
         <div class="result-card">
           <p class="small">
-            <strong>Versión:</strong> 0.3 local<br>
+            <strong>Versión:</strong> 0.4 local<br>
             <strong>Datos:</strong> simulados/manuales<br>
             <strong>Mapa:</strong> OpenStreetMap<br>
             <strong>Circuito de validación:</strong> básico incluido<br>
@@ -499,11 +514,7 @@
   </main>
 
   <script>
-    // -----------------------------
-    // 1. Datos básicos del territorio
-    // -----------------------------
-
-    const center = [37.3866, -6.5526]; // La Palma del Condado
+    const center = [37.3866, -6.5526];
 
     const municipalities = [
       {
@@ -543,11 +554,6 @@
         role: "Municipio mayor del entorno"
       }
     ];
-
-    // -----------------------------
-    // 2. Actividades piloto
-    // Los datos son orientativos/simulados para probar el prototipo.
-    // -----------------------------
 
     const opportunities = {
       mayores: {
@@ -699,10 +705,6 @@
       }
     };
 
-    // -----------------------------
-    // 3. Inicialización del mapa
-    // -----------------------------
-
     const map = L.map("map").setView(center, 15);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -729,10 +731,6 @@
     };
 
     legend.addTo(map);
-
-    // -----------------------------
-    // 4. Funciones auxiliares
-    // -----------------------------
 
     function getBadgeClass(level) {
       if (level.toLowerCase().includes("alto")) return "alto";
@@ -833,10 +831,6 @@
       };
     }
 
-    // -----------------------------
-    // 5. Visualización de municipios
-    // -----------------------------
-
     function renderMunicipalities() {
       municipalitiesLayer.clearLayers();
 
@@ -857,10 +851,6 @@
         .addTo(municipalitiesLayer);
       });
     }
-
-    // -----------------------------
-    // 6. Visualización de oportunidad
-    // -----------------------------
 
     function renderOpportunity(activityKey) {
       const activity = opportunities[activityKey];
@@ -996,10 +986,6 @@
 
       map.setView(center, 15);
     }
-
-    // -----------------------------
-    // 7. Señales locales
-    // -----------------------------
 
     function renderSignals() {
       const signals = getSignals();
@@ -1159,17 +1145,9 @@
       alert("Señales borradas.");
     });
 
-    // -----------------------------
-    // 8. Eventos
-    // -----------------------------
-
     document.getElementById("activitySelect").addEventListener("change", (event) => {
       renderOpportunity(event.target.value);
     });
-
-    // -----------------------------
-    // 9. Arranque de la app
-    // -----------------------------
 
     renderMunicipalities();
     renderOpportunity("mayores");
